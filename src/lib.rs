@@ -12,11 +12,15 @@ use libc::{c_char, c_void, size_t};
 use std::mem::MaybeUninit;
 use std::vec::Vec;
 
+/// Result type used in CBuffer
+pub type Result<T> = std::result::Result<T, Error>;
+
+
 pub enum Error {
+    /// set_capacity() is not implemented for the underlying Buffer type (arrays)
     CanNotResize,
 }
 
-type Result = std::result::Result<(), Error>;
 
 /// Basic functionality to get the used and allocated size of a buffer
 pub trait CBuffer {
@@ -27,7 +31,7 @@ pub trait CBuffer {
     fn capacity(&self) -> usize;
 
     /// Change buffer size (allocate more memory)
-    fn set_capacity(&mut self, _len: usize) -> Result {
+    fn set_capacity(&mut self, _len: usize) -> Result<()> {
         Err(Error::CanNotResize)
     }
 }
@@ -42,7 +46,7 @@ impl CBuffer for Vec<u8> {
         self.capacity()
     }
 
-    fn set_capacity(&mut self, len: usize) -> Result {
+    fn set_capacity(&mut self, len: usize) -> Result<()> {
         self.reserve(len - self.len());
         Ok(())
     }
