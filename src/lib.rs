@@ -114,12 +114,11 @@ pub trait RxBuffer: CBuffer {
 
 impl RxBuffer for Vec<u8> {
     fn as_c_void (&mut self) -> (*mut c_void, size_t){
-        unsafe {self.set_len(self.capacity())};
-        (self.as_mut_ptr() as *mut c_void, self.len())
+        (self.as_mut_ptr() as *mut c_void, self.capacity())
     }
 
     fn as_c_char (&mut self) -> (*mut c_char, size_t){
-        (self.as_mut_ptr() as *mut c_char, self.len())
+        (self.as_mut_ptr() as *mut c_char, self.capacity())
     }
 
     unsafe fn rx_done(&mut self, len: usize) -> &[u8]{
