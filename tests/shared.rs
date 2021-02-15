@@ -39,10 +39,9 @@ pub fn read_cbuffer_from_testfile<'a>(filename: &str, buf: &'a mut (dyn RxBuffer
     assert_eq!(read as usize, 4);
 
     unsafe {
-        libc::close(fd)
-    };
-
-    buf.rx_done(read as usize)
+        libc::close(fd);
+        buf.rx_done(read as usize)
+    }
 }
 
 
