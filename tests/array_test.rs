@@ -1,4 +1,4 @@
-use uninit::{prelude::*};
+use uninit::prelude::*;
 mod shared;
 
 #[test]
@@ -16,7 +16,6 @@ fn array_test() {
     shared::delete_testfile(testfile);
 }
 
-
 #[test]
 fn uninit_array_test() {
     let testfile = "tests/tmp/uninit_array_test\0";
@@ -32,4 +31,3 @@ fn uninit_array_test() {
 
     shared::delete_testfile(testfile);
 }
-

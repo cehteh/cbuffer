@@ -1,6 +1,5 @@
 mod shared;
 
-
 #[test]
 fn vec_test() {
     let testfile = "tests/tmp/vec_test\0";
@@ -15,4 +14,3 @@ fn vec_test() {
 
     shared::delete_testfile(testfile);
 }
-
