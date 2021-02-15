@@ -5,9 +5,13 @@ authors = ["Christian Thäter <ct@pipapo.org>"]
 edition = "2018"
 description = "Low level interface to C-API's that expect a pointer/size reference to a buffer"
 license = "MIT OR Apache-2.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+repository = "https://github.com/cehteh/cbuffer.git"
+documentation = "https://docs.rs/cbuffer/latest/cbuffer/"
+keywords = ["libc", "ffi"]
 
 [dependencies]
 libc = "0.2"
 uninit = "0.4"
+
+[badges]
+maintenance = { status = "actively-developed" }
