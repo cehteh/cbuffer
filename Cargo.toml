@@ -1,6 +1,6 @@
 [package]
 name = "cbuffer"
-version = "0.2.0-pre1"
+version = "0.2.0-pre2"
 authors = ["Christian Thäter <ct@pipapo.org>"]
 edition = "2018"
 description = "Low level interface to C-API's that expect a pointer/size reference to a buffer"

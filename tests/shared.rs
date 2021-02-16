@@ -36,7 +36,7 @@ pub fn read_cbuffer_from_testfile<'a>(
 
     unsafe {
         libc::close(fd);
-        buf.rx_done(read as usize)
+        buf.done_len(read as usize)
     }
 }
 
