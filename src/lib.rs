@@ -130,7 +130,7 @@ pub trait RxBuffer: CBuffer {
     /// with the actual length of the data retrieved.
     /// This function returns a slice into the buffer containing the
     /// data.
-    unsafe fn done_len(&mut self, len: size_t) -> &[u8];
+    unsafe fn done(&mut self, len: size_t) -> &[u8];
 }
 
 impl RxBuffer for Vec<u8> {
@@ -142,7 +142,7 @@ impl RxBuffer for Vec<u8> {
         (self.as_mut_ptr() as *mut c_char, self.capacity())
     }
 
-    unsafe fn done_len(&mut self, len: usize) -> &[u8] {
+    unsafe fn done(&mut self, len: usize) -> &[u8] {
         assert!(len <= self.capacity());
         self.set_len(len);
         &self[..len]
@@ -158,7 +158,7 @@ impl<const N: usize> RxBuffer for [u8; N] {
         (self.as_mut_ptr() as *mut c_char, N)
     }
 
-    unsafe fn done_len(&mut self, len: usize) -> &[u8] {
+    unsafe fn done(&mut self, len: usize) -> &[u8] {
         &self[..len]
     }
 }
@@ -172,7 +172,7 @@ impl<const N: usize> RxBuffer for [MaybeUninit<u8>; N] {
         (self.as_mut_ptr() as *mut c_char, N)
     }
 
-    unsafe fn done_len(&mut self, len: usize) -> &[u8] {
+    unsafe fn done(&mut self, len: usize) -> &[u8] {
         MaybeUninit::slice_assume_init_ref(&self[..len])
     }
 }
