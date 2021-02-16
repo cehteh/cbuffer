@@ -30,7 +30,14 @@ pub trait CBuffer {
     /// The allocated size
     fn capacity(&self) -> usize;
 
+    /// Buffer can grow
+    #[inline]
+    fn can_set_capacity(&self) -> bool {
+        false
+    }
+
     /// Change buffer size (allocate more memory)
+    #[inline]
     fn set_capacity(&mut self, _len: usize) -> Result<()> {
         Err(Error::CanNotResize)
     }
@@ -46,8 +53,16 @@ impl CBuffer for Vec<u8> {
         self.capacity()
     }
 
+    #[inline]
+    fn can_set_capacity(&self) -> bool {
+        true
+    }
+
     fn set_capacity(&mut self, len: usize) -> Result<()> {
-        self.reserve(len - self.len());
+        // only growing
+        if self.capacity() < len {
+            self.reserve(len - self.len());
+        }
         Ok(())
     }
 }
