@@ -12,16 +12,6 @@ use libc::{c_char, c_void, size_t};
 use std::mem::MaybeUninit;
 use std::vec::Vec;
 
-/// Result type used in CBuffer
-pub type Result<T> = std::result::Result<T, Error>;
-
-
-pub enum Error {
-    /// set_capacity() is not implemented for the underlying Buffer type (arrays)
-    CanNotResize,
-}
-
-
 /// Basic functionality to get the used and allocated size of a buffer
 pub trait CBuffer {
     /// The used length
@@ -30,17 +20,17 @@ pub trait CBuffer {
     /// The allocated size
     fn capacity(&self) -> usize;
 
-    /// Buffer can grow
+    /// Get a 'Some(ResizeableBuffer)' when the underlying Buffer supports allocating more memory
     #[inline]
-    fn can_set_capacity(&self) -> bool {
-        false
+    fn can_set_capacity(&mut self) -> Option<&mut dyn ResizeableBuffer> {
+        None
     }
+}
 
+/// Implemented for Buffers which can be resized
+pub trait ResizeableBuffer {
     /// Change buffer size (allocate more memory)
-    #[inline]
-    fn set_capacity(&mut self, _len: usize) -> Result<()> {
-        Err(Error::CanNotResize)
-    }
+    fn set_capacity(&mut self, len: usize);
 }
 
 /// Shared functionality to query length and capacity of the underlying buffer.
@@ -54,16 +44,17 @@ impl CBuffer for Vec<u8> {
     }
 
     #[inline]
-    fn can_set_capacity(&self) -> bool {
-        true
+    fn can_set_capacity(&mut self) -> Option<&mut dyn ResizeableBuffer> {
+        Some(self)
     }
+}
 
-    fn set_capacity(&mut self, len: usize) -> Result<()> {
-        // only growing
+impl ResizeableBuffer for Vec<u8> {
+    fn set_capacity(&mut self, len: usize) {
+        // grow only
         if self.capacity() < len {
             self.reserve(len - self.len());
-        }
-        Ok(())
+        };
     }
 }
 
