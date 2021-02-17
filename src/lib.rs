@@ -12,75 +12,12 @@ use libc::{c_char, c_void, size_t};
 use std::mem::MaybeUninit;
 use std::vec::Vec;
 
-/// Basic functionality to get the used and allocated size of a buffer
-pub trait CBuffer {
+/// The 'TxBuffer' is a used when writing data out.
+/// It's contents must be fully initialized.
+pub trait TxBuffer {
     /// The used length
     fn len(&self) -> usize;
 
-    /// The allocated size
-    fn capacity(&self) -> usize;
-
-    /// Get a 'Some(ResizeableBuffer)' when the underlying Buffer supports allocating more memory
-    #[inline]
-    fn can_set_capacity(&mut self) -> Option<&mut dyn ResizeableBuffer> {
-        None
-    }
-}
-
-/// Implemented for Buffers which can be resized
-pub trait ResizeableBuffer {
-    /// Change buffer size (allocate more memory)
-    fn set_capacity(&mut self, len: usize);
-}
-
-/// Shared functionality to query length and capacity of the underlying buffer.
-impl CBuffer for Vec<u8> {
-    fn len(&self) -> usize {
-        self.len()
-    }
-
-    fn capacity(&self) -> usize {
-        self.capacity()
-    }
-
-    #[inline]
-    fn can_set_capacity(&mut self) -> Option<&mut dyn ResizeableBuffer> {
-        Some(self)
-    }
-}
-
-impl ResizeableBuffer for Vec<u8> {
-    fn set_capacity(&mut self, len: usize) {
-        // grow only
-        if self.capacity() < len {
-            self.reserve(len - self.len());
-        };
-    }
-}
-
-impl<const N: usize> CBuffer for [u8; N] {
-    fn len(&self) -> usize {
-        N
-    }
-
-    fn capacity(&self) -> usize {
-        N
-    }
-}
-
-impl<const N: usize> CBuffer for [MaybeUninit<u8>; N] {
-    fn len(&self) -> usize {
-        N
-    }
-
-    fn capacity(&self) -> usize {
-        N
-    }
-}
-
-/// The 'TxBuffer' is a used when writing data out.
-/// It's contents must be fully initialized.
-pub trait TxBuffer: CBuffer {
     /// Returns a const void*/size_t pair to be used in the C call.
     fn as_c_void(&self) -> (*const c_void, size_t);
 
@@ -89,6 +26,10 @@ pub trait TxBuffer: CBuffer {
 }
 
 impl TxBuffer for Vec<u8> {
+    fn len(&self) -> usize {
+        self.len()
+    }
+
     fn as_c_void(&self) -> (*const c_void, size_t) {
         (self.as_ptr() as *mut c_void, self.len())
     }
@@ -99,6 +40,10 @@ impl TxBuffer for Vec<u8> {
 }
 
 impl<const N: usize> TxBuffer for [u8; N] {
+    fn len(&self) -> usize {
+        N
+    }
+
     fn as_c_void(&self) -> (*const c_void, size_t) {
         (self.as_ptr() as *mut c_void, self.len())
     }
@@ -106,11 +51,15 @@ impl<const N: usize> TxBuffer for [u8; N] {
     fn as_c_char(&self) -> (*const c_char, size_t) {
         (self.as_ptr() as *mut c_char, self.len())
     }
+
 }
 
 /// The 'RxBuffer' is a used when reading data in.
 /// The contents of the buffer can be uninitialized.
-pub trait RxBuffer: CBuffer {
+pub trait RxBuffer {
+    /// The allocated size
+    fn capacity(&self) -> usize;
+
     /// Returns a void*/size_t pair to be used in the C call.
     fn as_c_void(&mut self) -> (*mut c_void, size_t);
 
@@ -122,9 +71,19 @@ pub trait RxBuffer: CBuffer {
     /// This function returns a slice into the buffer containing the
     /// data.
     unsafe fn done(&mut self, len: size_t) -> &[u8];
+
+    /// Get a 'Some(ResizeableBuffer)' when the underlying Buffer supports allocating more memory
+    #[inline]
+    fn can_set_capacity(&mut self) -> Option<&mut dyn ResizeableBuffer> {
+        None
+    }
 }
 
 impl RxBuffer for Vec<u8> {
+    fn capacity(&self) -> usize {
+        self.capacity()
+    }
+
     fn as_c_void(&mut self) -> (*mut c_void, size_t) {
         (self.as_mut_ptr() as *mut c_void, self.capacity())
     }
@@ -138,9 +97,19 @@ impl RxBuffer for Vec<u8> {
         self.set_len(len);
         &self[..len]
     }
+
+    #[inline]
+    fn can_set_capacity(&mut self) -> Option<&mut dyn ResizeableBuffer> {
+        Some(self)
+    }
 }
 
+
 impl<const N: usize> RxBuffer for [u8; N] {
+    fn capacity(&self) -> usize {
+        N
+    }
+
     fn as_c_void(&mut self) -> (*mut c_void, size_t) {
         (self.as_mut_ptr() as *mut c_void, N)
     }
@@ -155,6 +124,10 @@ impl<const N: usize> RxBuffer for [u8; N] {
 }
 
 impl<const N: usize> RxBuffer for [MaybeUninit<u8>; N] {
+    fn capacity(&self) -> usize {
+        N
+    }
+
     fn as_c_void(&mut self) -> (*mut c_void, size_t) {
         (self.as_mut_ptr() as *mut c_void, N)
     }
@@ -167,3 +140,19 @@ impl<const N: usize> RxBuffer for [MaybeUninit<u8>; N] {
         MaybeUninit::slice_assume_init_ref(&self[..len])
     }
 }
+
+/// Implemented for Buffers which can be resized
+pub trait ResizeableBuffer {
+    /// Change buffer size (allocate more memory)
+    fn set_capacity(&mut self, len: usize);
+}
+
+impl ResizeableBuffer for Vec<u8> {
+    fn set_capacity(&mut self, len: usize) {
+        // grow only
+        if self.capacity() < len {
+            self.reserve(len - self.len());
+        };
+    }
+}
+
