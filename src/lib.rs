@@ -51,7 +51,6 @@ impl<const N: usize> TxBuffer for [u8; N] {
     fn as_c_char(&self) -> (*const c_char, size_t) {
         (self.as_ptr() as *mut c_char, self.len())
     }
-
 }
 
 /// The 'RxBuffer' is a used when reading data in.
@@ -70,7 +69,7 @@ pub trait RxBuffer {
     /// with the actual length of the data retrieved.
     /// This function returns a slice into the buffer containing the
     /// data.
-    unsafe fn done(&mut self, len: size_t) -> &[u8];
+    unsafe fn done(&mut self, len: size_t) -> &mut [u8];
 
     /// Get a 'Some(ResizeableBuffer)' when the underlying Buffer supports allocating more memory
     #[inline]
@@ -92,10 +91,10 @@ impl RxBuffer for Vec<u8> {
         (self.as_mut_ptr() as *mut c_char, self.capacity())
     }
 
-    unsafe fn done(&mut self, len: usize) -> &[u8] {
+    unsafe fn done(&mut self, len: usize) -> &mut [u8] {
         assert!(len <= self.capacity());
         self.set_len(len);
-        &self[..len]
+        &mut self[..len]
     }
 
     #[inline]
@@ -103,7 +102,6 @@ impl RxBuffer for Vec<u8> {
         Some(self)
     }
 }
-
 
 impl<const N: usize> RxBuffer for [u8; N] {
     fn capacity(&self) -> usize {
@@ -118,8 +116,8 @@ impl<const N: usize> RxBuffer for [u8; N] {
         (self.as_mut_ptr() as *mut c_char, N)
     }
 
-    unsafe fn done(&mut self, len: usize) -> &[u8] {
-        &self[..len]
+    unsafe fn done(&mut self, len: usize) -> &mut [u8] {
+        &mut self[..len]
     }
 }
 
@@ -136,8 +134,8 @@ impl<const N: usize> RxBuffer for [MaybeUninit<u8>; N] {
         (self.as_mut_ptr() as *mut c_char, N)
     }
 
-    unsafe fn done(&mut self, len: usize) -> &[u8] {
-        MaybeUninit::slice_assume_init_ref(&self[..len])
+    unsafe fn done(&mut self, len: usize) -> &mut [u8] {
+        MaybeUninit::slice_assume_init_mut(&mut self[..len])
     }
 }
 
@@ -155,4 +153,3 @@ impl ResizeableBuffer for Vec<u8> {
         };
     }
 }
-
