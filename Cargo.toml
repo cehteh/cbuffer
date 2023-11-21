@@ -10,7 +10,7 @@ keywords = ["libc", "ffi"]
 
 [dependencies]
 libc = "0.2"
-uninit = "0.4"
+uninit = "0.6"
 
 [badges]
 maintenance = { status = "actively-developed" }
